@@ -11,10 +11,8 @@ struct NRF_SPI_PINS
 };
 
 static struct NRF_SPI_PINS NRF1;
-static uint8_t rxName[] = "default"; 
-static uint8_t rxNameSize = sizeof(rxName);
-static uint8_t txName[] = "default"; 
-static uint8_t txNameSize = sizeof(txName);
+static uint8_t rxName[] = "namee"; 
+static uint8_t txName[] = "namee"; 
 
 static void setCELow(void)
 {
@@ -81,8 +79,8 @@ static void NRF_config(void)
 
     NRF_writeReg8(0x05, CHANNEL);                     // set channel
 
-    NRF_writeReg(0x0A, rxName, rxNameSize);         // set RX name
-    NRF_writeReg(0x10, txName, txNameSize);         // set TX name
+    NRF_writeReg(0x0A, rxName, NAME_LEN);         // set RX name
+    NRF_writeReg(0x10, txName, NAME_LEN);         // set TX name
 
     NRF_writeReg8(0x11, BYTES_IN_FRAME);             // set bytes in pipe
 }
@@ -125,7 +123,7 @@ void NRF_TxMode(void)
 void NRF_RxMode(void)
 {
     uint8_t reg = NRF_readReg(0x00);
-    reg |= (1<<0);                                  // set PRIM_RX to 0
+    reg |= (1<<0);                                  // set PRIM_RX to 1
     NRF_writeReg8(0x00, reg);
     setCEHigh();
     sleep_us(130u);
@@ -156,7 +154,15 @@ void NRF_readMsg(uint8_t *msg)
 uint8_t NRF_newMsg(void)
 {
     uint8_t status = NRF_readReg(0x17);
-    status = !(status & 1u);
+    status = !(status & 0b00000001);
+
+    return status;
+}
+
+uint8_t NRF_check(void)
+{
+    uint8_t status = NRF_readReg(0x07);
+    status = (status & 0b01100000);
 
     return status;
 }
