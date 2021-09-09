@@ -11,6 +11,7 @@ pico_sdk_init()
 
 add_executable(${PROJECT_NAME}
     src/main.c
+    lib/NRF24L01.c
 )
 
 pico_add_extra_outputs(${PROJECT_NAME})
