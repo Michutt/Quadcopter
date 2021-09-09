@@ -7,6 +7,7 @@
 #define DUMMY_BYTE      0xff
 #define WRITE_REG       0b00100000
 #define CHANNEL         60u
+#define BYTES_IN_FRAME  32u
 
 struct NRF_SPI_PINS 
 {
@@ -19,6 +20,10 @@ struct NRF_SPI_PINS
 };
 
 static struct NRF_SPI_PINS NRF1;
+static uint8_t rxName[] = "default"; 
+static uint8_t rxNameSize = sizeof(rxName);
+static uint8_t txName[] = "default"; 
+static uint8_t txNameSize = sizeof(txName);
 
 static void setCELow(void)
 {
@@ -86,4 +91,31 @@ void NRF_writeReg(uint8_t reg, uint8_t *buff, uint8_t buffSize)
     setCSNHigh();
 }
 
+void NRF_writeReg8(uint8_t reg, uint8_t buff)
+{
+    reg = WRITE_REG | (0b00011111 & reg);
 
+    setCSNLow();
+    spi_write_blocking(NRF1.port, &reg, BYTES_2USE);
+    spi_write_blocking(NRF1.port, &buff, BYTES_2USE);
+    setCSNHigh();
+}
+
+void NRF_config(void)
+{
+    setCSNHigh();
+    setCELow();
+    sleep_ms(11u);
+
+    NRF_writeReg8(0u, 0b00001010);                  //power up & enable CRC
+    sleep_us(1500u);
+
+    NRF_writeReg8(1u, 0b00000000);                  // no ack
+
+    NRF_writeReg8(5u, CHANNEL);                     // set channel
+
+    NRF_writeReg(0x0A, rxName, rxNameSize);         // set RX name
+    NRF_writeReg(0x10, txName, txNameSize);         // set TX name
+
+    NRF_writeReg(0x11, BYTES_IN_FRAME);             // set bytes in pipe
+}
