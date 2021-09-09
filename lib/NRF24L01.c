@@ -1,16 +1,5 @@
 #include "NRF24L01.h"
 
-#define OUTPUT          1u
-#define OUT_LOW         0u
-#define OUT_HIGH        1u
-#define BYTES_2USE      1u
-#define DUMMY_BYTE      0xff
-#define WRITE_REG       0b00100000
-#define SEND_MSG_REG    0b10100000
-#define READ_MSG_REG    0b01100001
-#define CHANNEL         60u
-#define BYTES_IN_FRAME  32u
-
 struct NRF_SPI_PINS 
 {
     spi_inst_t *port; 
@@ -79,6 +68,25 @@ static uint8_t NRF_readReg(uint8_t reg)
     return buff;
 }
 
+static void NRF_config(void)
+{
+    setCSNHigh();
+    setCELow();
+    sleep_ms(11u);
+
+    NRF_writeReg8(0x00, 0b00001010);                  //power up & enable CRC
+    sleep_us(1500u);
+
+    NRF_writeReg8(0x01, 0b00000000);                  // no ack
+
+    NRF_writeReg8(0x05, CHANNEL);                     // set channel
+
+    NRF_writeReg(0x0A, rxName, rxNameSize);         // set RX name
+    NRF_writeReg(0x10, txName, txNameSize);         // set TX name
+
+    NRF_writeReg8(0x11, BYTES_IN_FRAME);             // set bytes in pipe
+}
+
 void NRF_init(spi_inst_t *port, uint8_t sck, uint8_t mosi, 
                 uint8_t miso, uint8_t ce, uint8_t csn)
 {
@@ -101,25 +109,8 @@ void NRF_init(spi_inst_t *port, uint8_t sck, uint8_t mosi,
 
     setCELow();
     setCSNHigh();
-}
 
-void NRF_config(void)
-{
-    setCSNHigh();
-    setCELow();
-    sleep_ms(11u);
-
-    NRF_writeReg8(0x00, 0b00001010);                  //power up & enable CRC
-    sleep_us(1500u);
-
-    NRF_writeReg8(0x01, 0b00000000);                  // no ack
-
-    NRF_writeReg8(0x05, CHANNEL);                     // set channel
-
-    NRF_writeReg(0x0A, rxName, rxNameSize);         // set RX name
-    NRF_writeReg(0x10, txName, txNameSize);         // set TX name
-
-    NRF_writeReg8(0x11, BYTES_IN_FRAME);             // set bytes in pipe
+    NRF_config();
 }
 
 void NRF_TxMode(void)
@@ -127,6 +118,7 @@ void NRF_TxMode(void)
     uint8_t reg = NRF_readReg(0x00);
     reg &= ~(1<<0);                                 // set PRIM_RX to 0
     NRF_writeReg8(0x00, reg);
+    setCELow();
     sleep_us(130u);
 }
 
@@ -135,6 +127,7 @@ void NRF_RxMode(void)
     uint8_t reg = NRF_readReg(0x00);
     reg |= (1<<0);                                  // set PRIM_RX to 0
     NRF_writeReg8(0x00, reg);
+    setCEHigh();
     sleep_us(130u);
 }
 
@@ -147,7 +140,7 @@ void NRF_sendMsg(uint8_t *msg)
     setCSNHigh();
 
     setCEHigh();
-    sleep_us(10u);
+    sleep_us(300u);
     setCELow();
 }
 
