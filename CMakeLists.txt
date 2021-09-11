@@ -11,10 +11,13 @@ pico_sdk_init()
 
 add_executable(${PROJECT_NAME}
     src/main.c
+    lib/NRF24L01.c
 )
 
 pico_add_extra_outputs(${PROJECT_NAME})
 
 target_link_libraries(${PROJECT_NAME}
     pico_stdlib
+    hardware_spi
+    hardware_gpio
 )
