@@ -3,17 +3,22 @@
 #include <stdio.h>
 
 #define MPU_ADDR            0x68
-#define LSB_2G              16384.0
+#define LSB_ACC             16384.0
+#define LSB_GYRO            131.0
 #define RAD                 180u
 #define PI                  3.141592654
 #define RAD_2_DEG           RAD/PI
+#define KALMAN_GRYO         0.98
+#define KALMAN_ACC          0.02
 
 
 static i2c_inst_t MPU_i2c;
 static uint16_t MPU_accX, MPU_accY, MPU_accZ;
 static uint16_t MPU_gyroX, MPU_gyroY, MPU_gyroZ;
-static float_t MPU_accAngleX, MPU_accAngleY;
-
+static float_t MPU_accAngleX, MPU_accAngleY, MPU_gyroAngleX, MPU_gyroAngleY;
+static float_t MPU_angleX, MPU_angleY;
+static uint64_t time, prevTime;
+static float elapsedTime;
 
 static void MPU_readRaw(void)
 {
@@ -38,8 +43,15 @@ static void MPU_readRaw(void)
 
 static void MPU_raw2Angle(void)
 {
-    MPU_accAngleX = atan((MPU_accY/LSB_2G)/sqrt(pow((MPU_accX/LSB_2G), 2u) + pow((MPU_accZ/LSB_2G), 2u))) * RAD_2_DEG;
-    MPU_accAngleY = atan(-1 * (MPU_accX/LSB_2G)/sqrt(pow((MPU_accY/LSB_2G), 2u) + pow((MPU_accZ/LSB_2G), 2u))) * RAD_2_DEG;
+    MPU_accAngleX = atan((MPU_accY/LSB_ACC)/sqrt(pow((MPU_accX/LSB_ACC), 2u) + pow((MPU_accZ/LSB_ACC), 2u))) * RAD_2_DEG;
+    MPU_accAngleY = atan(-1 * (MPU_accX/LSB_ACC)/sqrt(pow((MPU_accY/LSB_ACC), 2u) + pow((MPU_accZ/LSB_ACC), 2u))) * RAD_2_DEG;
+
+    MPU_gyroAngleX = (float_t)MPU_gyroX/LSB_GYRO;
+    MPU_gyroAngleY = (float_t)MPU_gyroY/LSB_GYRO;
+
+    //kalman
+    MPU_angleX = (KALMAN_GRYO * (MPU_angleX + (MPU_gyroAngleX * elapsedTime))) + (KALMAN_ACC * MPU_accAngleX);
+    MPU_angleY = (KALMAN_GRYO * (MPU_angleY + (MPU_gyroAngleY * elapsedTime))) + (KALMAN_ACC * MPU_accAngleY);
 }
 
 void MPU_init(i2c_inst_t i2c, uint32_t baud, uint8_t SDA, uint8_t SCL)
@@ -56,8 +68,12 @@ void MPU_init(i2c_inst_t i2c, uint32_t baud, uint8_t SDA, uint8_t SCL)
 }
 
 void MPU_update(void)
-{
+{ 
+    prevTime = time;
+    time = to_us_since_boot(get_absolute_time());
+    elapsedTime = (float_t)(time - prevTime) / 1000000.0;
+
     MPU_readRaw();
     MPU_raw2Angle();
-    printf("%f---%f\n", MPU_accAngleX, MPU_accAngleY);
+    printf("%f---%f---%f\n", MPU_angleX, MPU_angleY, elapsedTime);
 }

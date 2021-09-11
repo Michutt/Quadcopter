@@ -19,6 +19,5 @@ int main() {
     while (true) 
     {
         MPU_update();
-        sleep_ms(100u);
     }
 }

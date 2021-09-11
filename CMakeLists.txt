@@ -25,4 +25,5 @@ target_link_libraries(${PROJECT_NAME}
     hardware_spi
     hardware_gpio
     hardware_i2c
+    hardware_rtc
 )
