@@ -13,10 +13,12 @@
 #define MPU_SDA     2u
 
 int main() {
+    stdio_init_all();
     MPU_init(i2c1_inst, 400000, MPU_SDA, MPU_SCL);
 
     while (true) 
     {
-//
+        MPU_readRaw();
+        sleep_ms(100u);
     }
 }
