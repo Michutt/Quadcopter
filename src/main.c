@@ -1,11 +1,10 @@
 #include "pico/stdlib.h"
 
-#define NRF_CE      0
-#define NRF_CSN     0
-#define NRF_MOSI    0
-#define NRF_MISO    0
-#define NRF_CLK     0
-
+#define NRF_CE      8u
+#define NRF_CSN     9u
+#define NRF_CLK     10u
+#define NRF_MOSI    11u
+#define NRF_MISO    12u
 
 int main() {
     const uint LED_PIN = PICO_DEFAULT_LED_PIN;
