@@ -1,4 +1,5 @@
 #include "pico/stdlib.h"
+#include "hardware/pwm.h"
 
 #define NRF_CE      8u
 #define NRF_CSN     9u
@@ -7,14 +8,25 @@
 #define NRF_MISO    12u
 
 int main() {
-    const uint LED_PIN = PICO_DEFAULT_LED_PIN;
-    gpio_init(LED_PIN);
-    gpio_set_dir(LED_PIN, GPIO_OUT);
+    gpio_set_function(0, GPIO_FUNC_PWM);
+    uint slice = pwm_gpio_to_slice_num(0);
+    uint channel = pwm_gpio_to_channel(0);
 
+    pwm_set_clkdiv(slice, 152);
+    pwm_set_wrap(slice, 16384); 
+    pwm_set_chan_level(slice, channel, 800); //~800 min 1600 max
+    pwm_set_enabled(slice, true);
+
+    sleep_ms(10000);
+
+    pwm_set_chan_level(slice, channel, 1000); //~800 min 1600 max
+    pwm_set_enabled(slice, true);
+
+    sleep_ms(2000);
+
+    pwm_set_chan_level(slice, channel, 800); //~800 min 1600 max
+    pwm_set_enabled(slice, true);
     while (true) {
-        gpio_put(LED_PIN, 1);
-        sleep_ms(250);
-        gpio_put(LED_PIN, 0);
-        sleep_ms(250);
+        
     }
 }
