@@ -18,7 +18,7 @@ int main() {
 
     while (true) 
     {
-        MPU_readRaw();
+        MPU_update();
         sleep_ms(100u);
     }
 }
